@@ -1,0 +1,19 @@
+name: PrefixBox
+main: com.mengcraft.prefixbox.Main
+version: ${project.version}
+
+commands:
+  prefixbox:
+    aliases: [pbox, pboxadmin]
+    description: None.
+    permission: prefixbox.use
+
+permissions:
+  prefixbox.use:
+    description: None.
+    default: true
+  prefixbox.admin:
+    description: None.
+    default: op
+
+depend: [SimpleORM, Vault]
