@@ -66,12 +66,12 @@ public class Executor implements Listener, CommandExecutor, Runnable {
         } else if (arguments[0].equals("list") && arguments.length == 1) {
             return list(sender);
         } else if (arguments[0].equals("give") && arguments.length == 4) {
-            return give(arguments[1], Integer.parseInt(arguments[2]), Integer.parseInt(arguments[3]));
+            return give(sender, arguments[1], Integer.parseInt(arguments[2]), Integer.parseInt(arguments[3]));
         }
         return true;
     }
 
-    private boolean give(String name, int prefixId, int day) {
+    private boolean give(CommandSender sender, String name, int prefixId, int day) {
         PrefixDefine prefixDefine = db.find(PrefixDefine.class, prefixId);
 
         // Return if prefix not exists!
@@ -96,6 +96,8 @@ public class Executor implements Listener, CommandExecutor, Runnable {
 
             main.execute(() -> db.save(selected));
         }
+
+        sender.sendMessage(ChatColor.GOLD + "DONE!");
 
         return true;
     }
@@ -152,7 +154,9 @@ public class Executor implements Listener, CommandExecutor, Runnable {
         // Update player's default prefix.
         main.execute(() -> prefixDefault.update(db));
 
-        player.addPotionEffects(prefixDefault.getDefine().getDefine().getBuffList());
+        if (prefixDefault.getDefine() != null) {
+            player.addPotionEffects(prefixDefault.getDefine().getDefine().getBuffList());
+        }
         player.sendMessage(ChatColor.GOLD + "称号选择成功！");
 
         return true;
