@@ -16,7 +16,7 @@ public class PrefixPlayerDefine {
     private int id;
 
     @Column
-    private java.lang.String name;
+    private String name;
 
     @OneToOne
     private PrefixDefine define;
@@ -36,7 +36,7 @@ public class PrefixPlayerDefine {
         return name;
     }
 
-    public void setName(java.lang.String name) {
+    public void setName(String name) {
         this.name = name;
     }
 
@@ -57,7 +57,7 @@ public class PrefixPlayerDefine {
     }
 
     public boolean isOutdated() {
-        return getOutdated().getTime() < System.currentTimeMillis();
+        return define != null && getOutdated().getTime() < System.currentTimeMillis();
     }
 
 }

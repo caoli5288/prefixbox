@@ -22,11 +22,11 @@ public class PrefixDefine {
     @Id
     private int id;
 
-    @Column
-    private PrefixPlayerDefine name;
-
     @Column(columnDefinition = "TEXT")
     private String data;
+
+    @Transient
+    private String name;
 
     @Transient
     private List<PotionEffect> buffList;
@@ -40,14 +40,6 @@ public class PrefixDefine {
 
     public void setId(int id) {
         this.id = id;
-    }
-
-    public PrefixPlayerDefine getName() {
-        return name;
-    }
-
-    public void setName(PrefixPlayerDefine name) {
-        this.name = name;
     }
 
     public String getData() {
@@ -76,17 +68,25 @@ public class PrefixDefine {
         return loreList;
     }
 
+    public String getName() {
+        if (name == null) {
+            parse();
+        }
+        return name;
+    }
+
     @SuppressWarnings("unchecked")
     private void parse() {
         JSONObject root = (JSONObject) JSONValue.parse(getData());
 
         buffList = new ArrayList<>();
         loreList = (List<String>) root.get("lore");
+        name     = root.get("name").toString();
 
-        Map<String, Integer> buffMap = (Map<String, Integer>) root.get("buff");
+        Map<String, Long> buffMap = (Map<String, Long>) root.get("buff");
 
-        for (Map.Entry<String, Integer> entry : buffMap.entrySet()) {
-            buffList.add(new PotionEffect(PotionEffectType.getByName(entry.getKey()), 160, entry.getValue()));
+        for (Map.Entry<String, Long> entry : buffMap.entrySet()) {
+            buffList.add(new PotionEffect(PotionEffectType.getByName(entry.getKey()), 160, entry.getValue().intValue()));
         }
     }
 

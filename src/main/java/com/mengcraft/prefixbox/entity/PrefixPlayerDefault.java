@@ -1,5 +1,7 @@
 package com.mengcraft.prefixbox.entity;
 
+import com.mengcraft.simpleorm.EbeanHandler;
+
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.OneToOne;
@@ -40,6 +42,10 @@ public class PrefixPlayerDefault {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public void update(EbeanHandler db) {
+        db.save(this);
     }
 
 }

@@ -23,7 +23,7 @@ public class PrefixList extends ArrayList<PrefixPlayerDefine> {
         list.add(ChatColor.GOLD + "-- 无限期");
         for (int i = 0; i < this.size(); ++i) {
             PrefixPlayerDefine def = get(i);
-            list.add("" + ChatColor.GOLD + (i + 1) + ". " + def.getName());
+            list.add("" + ChatColor.GOLD + (i + 1) + ". " + def.getDefine().getName());
             list.add(ChatColor.GOLD + "-- " + (def.isOutdated() ? "已过期" : "剩" + getRemainDay(def.getOutdated().getTime()) + "天"));
             for (String lore : def.getDefine().getLoreList()) {
                 list.add(ChatColor.GOLD + "-- " + lore);
