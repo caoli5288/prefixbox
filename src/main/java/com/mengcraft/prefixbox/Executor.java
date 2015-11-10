@@ -18,6 +18,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.potion.PotionEffect;
 
 import java.sql.Timestamp;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -29,7 +30,9 @@ public class Executor implements Listener, CommandExecutor, Runnable {
 
     private final Map<String, PrefixPlayerDefault> defaultCache = new ConcurrentHashMap<>();
     private final Map<String, PrefixList> playerCache = new ConcurrentHashMap<>();
+    private final Map<String, Long> coolDownMap = new HashMap<>();
 
+    private final long coolDownTime;
     private final Chat chat;
     private final Main main;
     private final EbeanHandler db;
@@ -38,6 +41,7 @@ public class Executor implements Listener, CommandExecutor, Runnable {
         this.chat = main.getServer().getServicesManager().getRegistration(Chat.class).getProvider();
         this.main = main;
         this.db = db;
+        this.coolDownTime = main.getConfig().getInt("coolDown", 1) * 60000;
     }
 
     @Override
@@ -105,7 +109,7 @@ public class Executor implements Listener, CommandExecutor, Runnable {
     private boolean list(CommandSender sender) {
         List<PrefixDefine> list = db.find(PrefixDefine.class).findList();
 
-        sender.sendMessage(ChatColor.GOLD + ">>> 已定义的称号列表：");
+        sender.sendMessage(ChatColor.GOLD + ">>> 已定义的称号列表");
         for (PrefixDefine prefix : list) {
             sender.sendMessage("§6" + prefix.getId() + ". " + prefix.getName());
             for (String line : prefix.getLoreList()) {
@@ -127,7 +131,7 @@ public class Executor implements Listener, CommandExecutor, Runnable {
             } else if (arguments.length == 1) try {
                 return use(((Player) sender), Integer.parseInt(arguments[0]));
             } catch (NumberFormatException e) {
-                sender.sendMessage(ChatColor.DARK_RED + "发生了一些问题。" + e.getMessage());
+                sender.sendMessage(ChatColor.DARK_RED + "发生了一些问题" + e.getMessage());
             }
             return true;
         }
@@ -135,9 +139,18 @@ public class Executor implements Listener, CommandExecutor, Runnable {
     }
 
     private boolean use(Player player, int index) {
+        long coolDown = getCoolDown(coolDownMap.get(player.getName()));
+        if (coolDown != 0) {
+            player.sendMessage(ChatColor.RED + "称号切换冷却时间剩余" + coolDown / 1000 + "秒");
+
+            return false;
+        }
+
         PrefixList prefixList = getPlayerCache().get(player.getName());
 
         if (index < 0 || index > prefixList.size()) {
+            player.sendMessage(ChatColor.RED + "发生了一些问题");
+
             return false;
         }
 
@@ -157,9 +170,16 @@ public class Executor implements Listener, CommandExecutor, Runnable {
         if (prefixDefault.getDefine() != null) {
             player.addPotionEffects(prefixDefault.getDefine().getDefine().getBuffList());
         }
-        player.sendMessage(ChatColor.GOLD + "称号选择成功！");
+
+        coolDownMap.put(player.getName(), System.currentTimeMillis() + coolDownTime);
+
+        player.sendMessage(ChatColor.GOLD + "称号选择成功");
 
         return true;
+    }
+
+    private long getCoolDown(Long time) {
+        return time == null ? 0 : time - System.currentTimeMillis();
     }
 
     @EventHandler
@@ -198,6 +218,7 @@ public class Executor implements Listener, CommandExecutor, Runnable {
     private void dropCache(String name) {
         defaultCache.remove(name);
         playerCache.remove(name);
+        coolDownMap.remove(name);
     }
 
     public Map<String, PrefixPlayerDefault> getDefaultCache() {
