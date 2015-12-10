@@ -34,6 +34,9 @@ public class PrefixDefine {
     @Transient
     private List<String> loreList;
 
+    @Transient
+    private JSONObject root;
+
     public int getId() {
         return id;
     }
@@ -75,18 +78,27 @@ public class PrefixDefine {
         return name;
     }
 
+    public JSONObject getRoot() {
+        if (root == null) {
+            parse();
+        }
+        return root;
+    }
+
     @SuppressWarnings("unchecked")
     private void parse() {
-        JSONObject root = (JSONObject) JSONValue.parse(getData());
+        if (getData() != null) {
+            root = (JSONObject) JSONValue.parse(getData());
 
-        buffList = new ArrayList<>();
-        loreList = (List<String>) root.get("lore");
-        name     = root.get("name").toString();
+            buffList = new ArrayList<>();
+            loreList = (List<String>) root.get("lore");
+            name = root.get("name").toString();
 
-        Map<String, Long> buffMap = (Map<String, Long>) root.get("buff");
+            Map<String, Long> buffMap = (Map<String, Long>) root.get("buff");
 
-        for (Map.Entry<String, Long> entry : buffMap.entrySet()) {
-            buffList.add(new PotionEffect(PotionEffectType.getByName(entry.getKey()), 160, entry.getValue().intValue()));
+            for (Map.Entry<String, Long> entry : buffMap.entrySet()) {
+                buffList.add(new PotionEffect(PotionEffectType.getByName(entry.getKey()), 160, entry.getValue().intValue()));
+            }
         }
     }
 

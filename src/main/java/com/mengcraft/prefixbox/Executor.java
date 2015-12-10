@@ -15,6 +15,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.plugin.ServicePriority;
 import org.bukkit.potion.PotionEffect;
 
 import java.sql.Timestamp;
@@ -26,15 +27,17 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Created on 15-11-6.
  */
-public class Executor implements Listener, CommandExecutor, Runnable {
+public class Executor implements Listener, CommandExecutor, Runnable, PrefixBoxProvider {
 
     private final Map<String, PrefixPlayerDefault> defaultCache = new ConcurrentHashMap<>();
+
     private final Map<String, PrefixList> playerCache = new ConcurrentHashMap<>();
-    private final Map<String, Long> coolDownMap = new HashMap<>();
+    private final Map<String, Long>       coolDownMap = new HashMap<>();
 
     private final long coolDownTime;
     private final Chat chat;
     private final Main main;
+
     private final EbeanHandler db;
 
     public Executor(Main main, EbeanHandler db) {
@@ -226,9 +229,20 @@ public class Executor implements Listener, CommandExecutor, Runnable {
     }
 
     public void bind() {
+        main.getServer().getServicesManager().register(PrefixBoxProvider.class, this, main, ServicePriority.Normal);
         main.getCommand("prefixbox").setExecutor(this);
         main.getServer().getPluginManager().registerEvents(this, main);
         main.getServer().getScheduler().runTaskTimer(main, this, 120, 120);
+    }
+
+    @Override
+    public PrefixDefine getPlayerCurrentPrefix(Player player) {
+        try {
+            return getDefaultCache().get(player.getName()).getDefine().getDefine();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public Map<String, PrefixList> getPlayerCache() {
