@@ -3,7 +3,6 @@ package com.mengcraft.prefixbox;
 import com.mengcraft.prefixbox.entity.PrefixDefine;
 import com.mengcraft.prefixbox.entity.PrefixPlayerDefault;
 import com.mengcraft.prefixbox.entity.PrefixPlayerDefine;
-import com.mengcraft.prefixbox.event.PlayerPrefixChangeEvent;
 import com.mengcraft.prefixbox.util.PrefixList;
 import com.mengcraft.simpleorm.EbeanHandler;
 import net.milkbowl.vault.chat.Chat;
@@ -16,24 +15,22 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.plugin.ServicePriority;
 import org.bukkit.potion.PotionEffect;
 
 import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created on 15-11-6.
  */
-public class Executor implements Listener, CommandExecutor, Runnable, PrefixBoxProvider {
+public class Executor implements Listener, CommandExecutor, Runnable {
 
-    private final Map<String, PrefixPlayerDefault> defaultCache = new ConcurrentHashMap<>();
+    private final Map<String, Long> coolDownMap = new HashMap<>();
 
-    private final Map<String, PrefixList> playerCache = new ConcurrentHashMap<>();
-    private final Map<String, Long>       coolDownMap = new HashMap<>();
+    private final Map<String, PrefixPlayerDefault> playerDefaultCache;
+    private final Map<String, PrefixList>          playerCache;
 
     private final long coolDownTime;
     private final Chat chat;
@@ -42,6 +39,8 @@ public class Executor implements Listener, CommandExecutor, Runnable, PrefixBoxP
     private final EbeanHandler db;
 
     public Executor(Main main, EbeanHandler db) {
+        this.playerCache = PrefixManager.INSTANCE.getPlayerCache();
+        this.playerDefaultCache = PrefixManager.INSTANCE.getPlayerDefaultCache();
         this.chat = main.getServer().getServicesManager().getRegistration(Chat.class).getProvider();
         this.main = main;
         this.db = db;
@@ -50,7 +49,7 @@ public class Executor implements Listener, CommandExecutor, Runnable, PrefixBoxP
 
     @Override
     public void run() {
-        defaultCache.forEach((name, prefix) -> {
+        playerDefaultCache.forEach((name, prefix) -> {
             if (prefix.getDefine() != null && !prefix.getDefine().isOutdated()) {
                 Player p = main.getServer().getPlayerExact(name);
                 for (PotionEffect buff : prefix.getDefine().getDefine().getBuffList()) {
@@ -158,7 +157,7 @@ public class Executor implements Listener, CommandExecutor, Runnable, PrefixBoxP
             return false;
         }
 
-        PrefixPlayerDefault prefixDefault = getDefaultCache().get(player.getName());
+        PrefixPlayerDefault prefixDefault = getPlayerDefaultCache().get(player.getName());
 
         if (index == 0) {
             prefixDefault.setDefine(null);
@@ -178,8 +177,6 @@ public class Executor implements Listener, CommandExecutor, Runnable, PrefixBoxP
         coolDownMap.put(player.getName(), System.currentTimeMillis() + coolDownTime);
 
         player.sendMessage(ChatColor.GOLD + "称号选择成功");
-
-        main.getServer().getPluginManager().callEvent(new PlayerPrefixChangeEvent(player, prefixDefault.getDefine().getDefine()));
 
         return true;
     }
@@ -202,7 +199,7 @@ public class Executor implements Listener, CommandExecutor, Runnable, PrefixBoxP
                     .where()
                     .eq("name", event.getPlayer().getName())
                     .findUnique();
-            getDefaultCache().put(event.getPlayer().getName(), prefix == null ? a(event.getPlayer()) : prefix);
+            getPlayerDefaultCache().put(event.getPlayer().getName(), prefix == null ? a(event.getPlayer()) : prefix);
 
             if (prefix != null && prefix.getDefine() != null && prefix.getDefine().isOutdated()) {
                 chat.setPlayerPrefix(event.getPlayer(), "§r");
@@ -222,30 +219,19 @@ public class Executor implements Listener, CommandExecutor, Runnable, PrefixBoxP
     }
 
     private void dropCache(String name) {
-        defaultCache.remove(name);
+        playerDefaultCache.remove(name);
         playerCache.remove(name);
         coolDownMap.remove(name);
     }
 
-    public Map<String, PrefixPlayerDefault> getDefaultCache() {
-        return defaultCache;
+    public Map<String, PrefixPlayerDefault> getPlayerDefaultCache() {
+        return playerDefaultCache;
     }
 
     public void bind() {
-        main.getServer().getServicesManager().register(PrefixBoxProvider.class, this, main, ServicePriority.Normal);
         main.getCommand("prefixbox").setExecutor(this);
         main.getServer().getPluginManager().registerEvents(this, main);
         main.getServer().getScheduler().runTaskTimer(main, this, 120, 120);
-    }
-
-    @Override
-    public PrefixDefine getPlayerCurrentPrefix(Player player) {
-        try {
-            return getDefaultCache().get(player.getName()).getDefine().getDefine();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
     }
 
     public Map<String, PrefixList> getPlayerCache() {
