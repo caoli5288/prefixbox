@@ -3,6 +3,7 @@ package com.mengcraft.prefixbox;
 import com.mengcraft.prefixbox.entity.PrefixDefine;
 import com.mengcraft.prefixbox.entity.PrefixPlayerDefault;
 import com.mengcraft.prefixbox.entity.PrefixPlayerDefine;
+import com.mengcraft.prefixbox.event.PrefixChangeEvent;
 import com.mengcraft.prefixbox.util.PrefixList;
 import com.mengcraft.simpleorm.EbeanHandler;
 import net.milkbowl.vault.chat.Chat;
@@ -178,6 +179,8 @@ public class Executor implements Listener, CommandExecutor, Runnable {
 
         player.sendMessage(ChatColor.GOLD + "称号选择成功");
 
+        main.getServer().getPluginManager().callEvent(new PrefixChangeEvent(player, prefixDefault.getDefine().getDefine()));
+
         return true;
     }
 
@@ -201,8 +204,12 @@ public class Executor implements Listener, CommandExecutor, Runnable {
                     .findUnique();
             getPlayerDefaultCache().put(event.getPlayer().getName(), prefix == null ? a(event.getPlayer()) : prefix);
 
-            if (prefix != null && prefix.getDefine() != null && prefix.getDefine().isOutdated()) {
-                chat.setPlayerPrefix(event.getPlayer(), "§r");
+            if (prefix != null && prefix.getDefine() != null) {
+                if (prefix.getDefine().isOutdated()) {
+                    chat.setPlayerPrefix(event.getPlayer(), "§r");
+                } else {
+                    main.getServer().getPluginManager().callEvent(new PrefixChangeEvent(event.getPlayer(), prefix.getDefine().getDefine()));
+                }
             }
         });
     }
