@@ -4,6 +4,7 @@ import com.mengcraft.prefixbox.entity.PrefixDefine;
 import com.mengcraft.prefixbox.entity.PrefixPlayerDefault;
 import com.mengcraft.prefixbox.entity.PrefixPlayerDefine;
 import com.mengcraft.prefixbox.event.PrefixChangeEvent;
+import com.mengcraft.prefixbox.event.PrefixInitializedEvent;
 import com.mengcraft.prefixbox.util.PrefixList;
 import com.mengcraft.simpleorm.EbeanHandler;
 import net.milkbowl.vault.chat.Chat;
@@ -202,15 +203,18 @@ public class Executor implements Listener, CommandExecutor, Runnable {
                     .where()
                     .eq("name", event.getPlayer().getName())
                     .findUnique();
-            getPlayerDefaultCache().put(event.getPlayer().getName(), prefix == null ? a(event.getPlayer()) : prefix);
 
-            if (prefix != null && prefix.getDefine() != null) {
-                if (prefix.getDefine().isOutdated()) {
-                    chat.setPlayerPrefix(event.getPlayer(), "§r");
-                } else {
-                    main.getServer().getPluginManager().callEvent(new PrefixChangeEvent(event.getPlayer(), prefix.getDefine().getDefine()));
-                }
+            if (prefix == null) {
+                prefix = a(event.getPlayer());
             }
+
+            getPlayerDefaultCache().put(event.getPlayer().getName(), prefix);
+
+            if (prefix != null && prefix.getDefine() != null && prefix.getDefine().isOutdated()) {
+                chat.setPlayerPrefix(event.getPlayer(), "§r");
+            }
+
+            main.getServer().getPluginManager().callEvent(new PrefixInitializedEvent(event.getPlayer(), prefix));
         });
     }
 
