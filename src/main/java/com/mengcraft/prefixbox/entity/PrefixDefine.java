@@ -97,7 +97,7 @@ public class PrefixDefine {
             Map<String, Long> buffMap = (Map<String, Long>) root.get("buff");
 
             for (Map.Entry<String, Long> entry : buffMap.entrySet()) {
-                buffList.add(new PotionEffect(PotionEffectType.getByName(entry.getKey()), 160, entry.getValue().intValue()));
+                buffList.add(new PotionEffect(PotionEffectType.getByName(entry.getKey()), 1200, entry.getValue().intValue()));
             }
         }
     }

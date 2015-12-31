@@ -46,7 +46,7 @@ public class Executor implements Listener, CommandExecutor, Runnable {
         this.chat = main.getServer().getServicesManager().getRegistration(Chat.class).getProvider();
         this.main = main;
         this.db = db;
-        this.coolDownTime = main.getConfig().getInt("coolDown", 1) * 60000;
+        this.coolDownTime = main.getConfig().getInt("coolDown", 1) * 60000L;
     }
 
     @Override
@@ -242,7 +242,7 @@ public class Executor implements Listener, CommandExecutor, Runnable {
     public void bind() {
         main.getCommand("prefixbox").setExecutor(this);
         main.getServer().getPluginManager().registerEvents(this, main);
-        main.getServer().getScheduler().runTaskTimer(main, this, 120, 120);
+        main.getServer().getScheduler().runTaskTimer(main, this, 900, 900);
     }
 
     public Map<String, PrefixList> getPlayerCache() {
