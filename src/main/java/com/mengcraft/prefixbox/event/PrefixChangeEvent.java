@@ -1,6 +1,7 @@
 package com.mengcraft.prefixbox.event;
 
 import com.mengcraft.prefixbox.entity.PrefixDefine;
+import com.mengcraft.prefixbox.entity.PrefixPlayerDefine;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
@@ -15,9 +16,9 @@ public class PrefixChangeEvent extends Event {
     private final Player       player;
     private final PrefixDefine prefix;
 
-    public PrefixChangeEvent(Player player, PrefixDefine prefix) {
+    public PrefixChangeEvent(Player player, PrefixPlayerDefine prefix) {
         this.player = player;
-        this.prefix = prefix;
+        this.prefix = prefix == null ? null : prefix.getDefine();
     }
 
     public Player getPlayer() {

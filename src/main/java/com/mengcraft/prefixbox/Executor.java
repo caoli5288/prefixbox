@@ -145,7 +145,7 @@ public class Executor implements Listener, CommandExecutor, Runnable {
 
     private boolean use(Player player, int index) {
         long coolDown = getCoolDown(coolDownMap.get(player.getName()));
-        if (coolDown != 0) {
+        if (coolDown > 0) {
             player.sendMessage(ChatColor.RED + "称号切换冷却时间剩余" + coolDown / 1000 + "秒");
 
             return false;
@@ -180,7 +180,7 @@ public class Executor implements Listener, CommandExecutor, Runnable {
 
         player.sendMessage(ChatColor.GOLD + "称号选择成功");
 
-        main.getServer().getPluginManager().callEvent(new PrefixChangeEvent(player, prefixDefault.getDefine().getDefine()));
+        main.getServer().getPluginManager().callEvent(new PrefixChangeEvent(player, prefixDefault.getDefine()));
 
         return true;
     }
