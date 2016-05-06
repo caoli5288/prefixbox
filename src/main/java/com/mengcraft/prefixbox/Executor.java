@@ -5,8 +5,10 @@ import com.mengcraft.prefixbox.entity.PrefixPlayerDefault;
 import com.mengcraft.prefixbox.entity.PrefixPlayerDefine;
 import com.mengcraft.prefixbox.event.PrefixChangeEvent;
 import com.mengcraft.prefixbox.event.PrefixInitializedEvent;
+import com.mengcraft.prefixbox.util.CollectionUtil;
 import com.mengcraft.prefixbox.util.PrefixList;
 import com.mengcraft.simpleorm.EbeanHandler;
+import com.wodogs.mc.mark.Mark;
 import net.milkbowl.vault.chat.Chat;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -20,9 +22,12 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.potion.PotionEffect;
 
 import java.sql.Timestamp;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static java.lang.Integer.parseInt;
 
 /**
  * Created on 15-11-6.
@@ -30,14 +35,12 @@ import java.util.Map;
 public class Executor implements Listener, CommandExecutor, Runnable {
 
     private final Map<String, Long> coolDownMap = new HashMap<>();
-
     private final Map<String, PrefixPlayerDefault> playerDefaultCache;
-    private final Map<String, PrefixList>          playerCache;
-
+    private final Map<String, PrefixList> playerCache;
     private final long coolDownTime;
     private final Chat chat;
+    private final Mark mark = Mark.DEFAULT;
     private final Main main;
-
     private final EbeanHandler db;
 
     public Executor(Main main, EbeanHandler db) {
@@ -66,21 +69,25 @@ public class Executor implements Listener, CommandExecutor, Runnable {
         return label.equals("pbox") ? use(sender, arguments) : label.equals("pboxadmin") && admin(sender, arguments);
     }
 
-    private boolean admin(CommandSender sender, String[] arguments) {
+    private boolean admin(CommandSender sender, String[] args) {
         if (!sender.hasPermission("prefixbox.admin")) {
             return false;
-        } else if (arguments.length == 0) {
+        } else if (args.length == 0) {
             sender.sendMessage(ChatColor.GOLD + "/pboxadmin list");
-            sender.sendMessage(ChatColor.GOLD + "/pboxadmin give <player> <prefix_id> <day>");
-        } else if (arguments[0].equals("list") && arguments.length == 1) {
+            sender.sendMessage(ChatColor.GOLD + "/pboxadmin give <player> <prefix_id> <day> [mark]");
+        } else if (args[0].equals("list") && args.length == 1) {
             return list(sender);
-        } else if (arguments[0].equals("give") && arguments.length == 4) {
-            return give(sender, arguments[1], Integer.parseInt(arguments[2]), Integer.parseInt(arguments[3]));
+        } else if (args[0].equals("give")) {
+            if (args.length == 4) {
+                return give(sender, args[1], parseInt(args[2]), parseInt(args[3]), null);
+            } else if (args.length == 5) {
+                return give(sender, args[1], parseInt(args[2]), parseInt(args[3]), args[4]);
+            }
         }
         return true;
     }
 
-    private boolean give(CommandSender sender, String name, int prefixId, int day) {
+    private boolean give(CommandSender sender, String name, int prefixId, int day, String mark) {
         PrefixDefine prefixDefine = db.find(PrefixDefine.class, prefixId);
 
         // Return if prefix not exists!
@@ -96,6 +103,7 @@ public class Executor implements Listener, CommandExecutor, Runnable {
         if (selected == null) {
             PrefixPlayerDefine inserted = new PrefixPlayerDefine();
             inserted.setName(name);
+            inserted.setMark(mark);
             inserted.setDefine(prefixDefine);
             inserted.setOutdated(new Timestamp(System.currentTimeMillis() + day * 86400000L));
 
@@ -134,7 +142,7 @@ public class Executor implements Listener, CommandExecutor, Runnable {
             if (arguments.length == 0) {
                 sender.sendMessage(playerCache.get(sender.getName()).toStringArray());
             } else if (arguments.length == 1) try {
-                return use(((Player) sender), Integer.parseInt(arguments[0]));
+                return use(((Player) sender), parseInt(arguments[0]));
             } catch (NumberFormatException e) {
                 sender.sendMessage(ChatColor.DARK_RED + "发生了一些问题" + e.getMessage());
             }
@@ -192,11 +200,12 @@ public class Executor implements Listener, CommandExecutor, Runnable {
     @EventHandler
     public void handle(PlayerJoinEvent event) {
         main.execute(() -> {
-            List<PrefixPlayerDefine> list = db.find(PrefixPlayerDefine.class)
+            Collection<PrefixPlayerDefine> list = process(db.find(PrefixPlayerDefine.class)
                     .where()
                     .eq("name", event.getPlayer().getName())
                     .gt("outdated", new Timestamp(System.currentTimeMillis()))
-                    .findList();
+                    .findList());
+
             getPlayerCache().put(event.getPlayer().getName(), new PrefixList(list));
 
             PrefixPlayerDefault prefix = db.find(PrefixPlayerDefault.class)
@@ -216,6 +225,11 @@ public class Executor implements Listener, CommandExecutor, Runnable {
 
             main.getServer().getPluginManager().callEvent(new PrefixInitializedEvent(event.getPlayer(), prefix));
         });
+    }
+
+    private Collection<PrefixPlayerDefine> process(Collection<PrefixPlayerDefine> list) {
+        Collection<PrefixPlayerDefine> reduced = CollectionUtil.reduce(list, line -> line.hasNoMark() || line.getMark().equals(mark.getMark()));
+        return reduced;
     }
 
     private PrefixPlayerDefault a(Player player) {

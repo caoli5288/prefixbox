@@ -22,16 +22,25 @@
             <groupId>org.spigotmc</groupId>
             <artifactId>spigot-api</artifactId>
             <version>1.8.8-R0.1-SNAPSHOT</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.mengcraft</groupId>
             <artifactId>simpleorm</artifactId>
             <version>0.1.11</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>net.milkbowl.vault</groupId>
             <artifactId>Vault</artifactId>
             <version>1.2.32</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.wodogs.mc</groupId>
+            <artifactId>mark</artifactId>
+            <version>0.0.1</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
     <build>

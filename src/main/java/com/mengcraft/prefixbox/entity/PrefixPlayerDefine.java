@@ -14,14 +14,10 @@ public class PrefixPlayerDefine {
 
     @Id
     private int id;
-
-    @Column
     private String name;
-
+    private String mark;
     @OneToOne
     private PrefixDefine define;
-
-    @Column
     private Timestamp outdated;
 
     public int getId() {
@@ -38,6 +34,14 @@ public class PrefixPlayerDefine {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getMark() {
+        return mark;
+    }
+
+    public void setMark(String mark) {
+        this.mark = mark;
     }
 
     public PrefixDefine getDefine() {
@@ -60,4 +64,7 @@ public class PrefixPlayerDefine {
         return define != null && getOutdated().getTime() < System.currentTimeMillis();
     }
 
+    public boolean hasNoMark() {
+        return getMark() == null;
+    }
 }
