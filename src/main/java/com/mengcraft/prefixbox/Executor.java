@@ -204,7 +204,8 @@ public class Executor implements Listener, CommandExecutor, Runnable {
                     .where()
                     .eq("name", event.getPlayer().getName())
                     .gt("outdated", new Timestamp(System.currentTimeMillis()))
-                    .findList());
+                    .findList()
+            );
 
             getPlayerCache().put(event.getPlayer().getName(), new PrefixList(list));
 
@@ -219,7 +220,7 @@ public class Executor implements Listener, CommandExecutor, Runnable {
 
             getPlayerDefaultCache().put(event.getPlayer().getName(), prefix);
 
-            if (prefix == null || prefix.getDefine() == null || prefix.getDefine().isOutdated()) {
+            if (prefix != null && prefix.getDefine() != null && prefix.getDefine().isOutdated()) {
                 chat.setPlayerPrefix(event.getPlayer(), "§r");
             }
 
