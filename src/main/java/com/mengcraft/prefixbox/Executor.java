@@ -220,7 +220,7 @@ public class Executor implements Listener, CommandExecutor, Runnable {
 
             getPlayerDefaultCache().put(event.getPlayer().getName(), prefix);
 
-            if (prefix != null && prefix.getDefine() != null && prefix.getDefine().isOutdated()) {
+            if (prefix != null && prefix.getDefine() != null && (prefix.getDefine().isOutdated() || (prefix.getDefine().hasMark() && !prefix.getDefine().getMark().equals(mark.getMark())))) {
                 chat.setPlayerPrefix(event.getPlayer(), "§r");
             }
 

@@ -65,6 +65,10 @@ public class PrefixPlayerDefine {
     }
 
     public boolean hasNoMark() {
-        return getMark() == null;
+        return getMark() == null || getMark().equals("");
+    }
+
+    public boolean hasMark() {
+        return getMark() != null && !getMark().equals("");
     }
 }
