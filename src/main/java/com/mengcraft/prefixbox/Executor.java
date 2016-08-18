@@ -11,6 +11,7 @@ import com.mengcraft.simpleorm.EbeanHandler;
 import com.wodogs.mc.mark.Mark;
 import net.milkbowl.vault.chat.Chat;
 import org.bukkit.ChatColor;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -171,7 +172,7 @@ public class Executor implements Listener, CommandExecutor, Runnable {
 
         if (index == 0) {
             prefixDefault.setDefine(null);
-            chat.setPlayerPrefix(player, "§r");
+            chat.setPlayerPrefix(player, "");
         } else {
             PrefixPlayerDefine selected = prefixList.get(index - 1);
             prefixDefault.setDefine(selected);
@@ -221,7 +222,7 @@ public class Executor implements Listener, CommandExecutor, Runnable {
             getPlayerDefaultCache().put(event.getPlayer().getName(), prefix);
 
             if (prefix != null && prefix.getDefine() != null && (prefix.getDefine().isOutdated() || (prefix.getDefine().hasMark() && !prefix.getDefine().getMark().equals(mark.getMark())))) {
-                chat.setPlayerPrefix(event.getPlayer(), "§r");
+                chat.setPlayerPrefix(event.getPlayer(), "");
             }
 
             main.getServer().getPluginManager().callEvent(new PrefixInitializedEvent(event.getPlayer(), prefix));
