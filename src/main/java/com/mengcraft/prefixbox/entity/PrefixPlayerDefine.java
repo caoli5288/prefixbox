@@ -63,11 +63,8 @@ public class PrefixPlayerDefine {
         return define != null && getOutdated().getTime() < System.currentTimeMillis();
     }
 
-    public boolean hasNoMark() {
-        return getMark() == null || getMark().equals("");
+    public boolean hasMark() {
+        return !(getMark() == null || getMark().isEmpty());
     }
 
-    public boolean hasMark() {
-        return getMark() != null && !getMark().equals("");
-    }
 }

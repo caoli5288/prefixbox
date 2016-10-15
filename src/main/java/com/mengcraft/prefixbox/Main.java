@@ -5,6 +5,7 @@ import com.mengcraft.prefixbox.entity.PrefixPlayerDefault;
 import com.mengcraft.prefixbox.entity.PrefixPlayerDefine;
 import com.mengcraft.simpleorm.EbeanHandler;
 import com.mengcraft.simpleorm.EbeanManager;
+import com.wodogs.mc.mark.Mark;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -36,7 +37,14 @@ public class Main extends JavaPlugin {
         db.install();
         db.reflect();
 
-        new Executor(this, db).bind();
+        Executor executor = new Executor(this, db);
+        Plugin mark = getServer().getPluginManager().getPlugin("mark");
+        if (nil(mark)) {
+            executor.setMark(def -> !def.hasMark());
+        } else {
+            executor.setMark(def -> !def.hasMark() || Mark.DEFAULT.getMark().equals(def.getMark()));
+        }
+        executor.bind();
     }
 
     public void execute(Runnable runnable) {

@@ -8,7 +8,6 @@ import com.mengcraft.prefixbox.event.PrefixInitializedEvent;
 import com.mengcraft.prefixbox.util.CollectionUtil;
 import com.mengcraft.prefixbox.util.PrefixList;
 import com.mengcraft.simpleorm.EbeanHandler;
-import com.wodogs.mc.mark.Mark;
 import net.milkbowl.vault.chat.Chat;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -42,11 +41,11 @@ public class Executor implements Listener, CommandExecutor, Runnable {
     private final Map<String, PrefixList> playerCache;
     private final long coolTime;
     private final Chat chat;
-    private final Mark mark = Mark.DEFAULT;
-    private final Main main;
     private final EbeanHandler db;
+    private final Main main;
 
     private List<PrefixDefine> all;
+    private LibMark mark;
 
     public Executor(Main main, EbeanHandler db) {
         this.playerCache = PrefixManager.INSTANCE.getPlayerCache();
@@ -56,6 +55,10 @@ public class Executor implements Listener, CommandExecutor, Runnable {
         this.db = db;
         this.coolTime = main.getConfig().getInt("coolDown", 1) * 60000L;
         all = db.find(PrefixDefine.class).findList();
+    }
+
+    public void setMark(LibMark mark) {
+        this.mark = mark;
     }
 
     @Override
@@ -89,8 +92,11 @@ public class Executor implements Listener, CommandExecutor, Runnable {
                 int id = Integer.parseInt(it.next());
                 if (it.hasNext()) throw new IllegalArgumentException();
                 PrefixPlayerDefine def = find(sender, id);
-                if (def == null) sender.sendMessage("§4您未拥有该称号");
-                else {
+                if (nil(def)) {
+                    sender.sendMessage("§4您未拥有该称号");
+                } else if (!mark.match(def)) {
+                    sender.sendMessage("§4所选称号无法在当前区域使用");
+                } else {
                     PrefixPlayerDefault j = playerDefaultCache.get(sender.getName());
                     if (nil(j)) throw new RuntimeException();
                     j.setDefine(def);
@@ -297,7 +303,7 @@ public class Executor implements Listener, CommandExecutor, Runnable {
                 if (!nil(def)) {
                     if (def.isOutdated()) {
                         setPrefix(player, "");
-                    } else if (def.hasNoMark() || def.getMark().equals(mark.getMark())) {
+                    } else if (!mark.match(def)) {
                         setPrefix(player, "");
                     } else {
                         holder.setActivity(def.getDefine().getPermissionUse());
@@ -317,7 +323,7 @@ public class Executor implements Listener, CommandExecutor, Runnable {
     }
 
     private Collection<PrefixPlayerDefine> process(Collection<PrefixPlayerDefine> list) {
-        return CollectionUtil.reduce(list, line -> line.hasNoMark() || line.getMark().equals(mark.getMark()));
+        return CollectionUtil.reduce(list, line -> mark.match(line));
     }
 
     private void dropCache(String name) {
