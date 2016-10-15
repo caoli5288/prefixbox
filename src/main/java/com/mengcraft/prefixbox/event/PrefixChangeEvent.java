@@ -7,6 +7,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
+import static com.mengcraft.prefixbox.Main.nil;
+
 /**
  * Created on 15-12-11.
  */
@@ -17,9 +19,9 @@ public class PrefixChangeEvent extends Event {
     private final Player player;
     private final PrefixDefine prefix;
 
-    public PrefixChangeEvent(Player player, PrefixPlayerDefine prefix) {
+    private PrefixChangeEvent(Player player, PrefixPlayerDefine prefix) {
         this.player = player;
-        this.prefix = prefix == null ? null : prefix.getDefine();
+        this.prefix = (nil(prefix) ? null : prefix.getDefine());
     }
 
     public Player getPlayer() {

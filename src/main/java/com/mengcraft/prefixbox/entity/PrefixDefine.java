@@ -1,5 +1,6 @@
 package com.mengcraft.prefixbox.entity;
 
+import com.mengcraft.prefixbox.Main;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.json.simple.JSONObject;
@@ -36,6 +37,29 @@ public class PrefixDefine {
 
     @Transient
     private JSONObject root;
+
+    private static class Permission {
+        private String hold;
+        private String use;
+
+        private Permission(Map<String, String> map) {
+            if (!Main.nil(map)) {
+                hold = map.get("hold");
+                use = map.get("use");
+            }
+        }
+    }
+
+    @Transient
+    private Permission permission;
+
+    public String getPermissionHold() {
+        return permission.hold;
+    }
+
+    public String getPermissionUse() {
+        return permission.use;
+    }
 
     public int getId() {
         return id;
@@ -93,6 +117,8 @@ public class PrefixDefine {
             buffList = new ArrayList<>();
             loreList = (List<String>) root.get("lore");
             name = root.get("name").toString();
+
+            permission = new Permission((Map) root.get("permission"));
 
             Map<String, Long> buffMap = (Map<String, Long>) root.get("buff");
 

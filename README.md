@@ -10,6 +10,10 @@
     "buff":{
         "HEAL":0,
         "SPEED":0
+    },
+    "permission":{
+        "hold":"any-permission",
+        "use":"any-permission"
     }
 }
 ```

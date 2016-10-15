@@ -5,6 +5,7 @@ import com.mengcraft.prefixbox.entity.PrefixPlayerDefault;
 import com.mengcraft.prefixbox.entity.PrefixPlayerDefine;
 import com.mengcraft.simpleorm.EbeanHandler;
 import com.mengcraft.simpleorm.EbeanManager;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
 /**
@@ -12,8 +13,12 @@ import org.bukkit.plugin.java.JavaPlugin;
  */
 public class Main extends JavaPlugin {
 
+    public static Plugin plugin;
+
     @Override
     public void onEnable() {
+        plugin = this;
+
         EbeanHandler db = EbeanManager.DEFAULT.getHandler(this);
 
         if (!db.isInitialized()) {
@@ -40,6 +45,14 @@ public class Main extends JavaPlugin {
 
     public void process(Runnable runnable) {
         getServer().getScheduler().runTask(this, runnable);
+    }
+
+    public static boolean nil(Object i) {
+        return i == null;
+    }
+
+    public static Plugin getPlugin() {
+        return plugin;
     }
 
 }

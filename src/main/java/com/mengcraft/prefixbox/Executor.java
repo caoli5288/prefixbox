@@ -29,6 +29,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import static com.mengcraft.prefixbox.Main.nil;
 import static java.lang.Integer.parseInt;
 
 /**
@@ -36,10 +37,10 @@ import static java.lang.Integer.parseInt;
  */
 public class Executor implements Listener, CommandExecutor, Runnable {
 
-    private final Map<String, Long> coolDownMap = new HashMap<>();
+    private final Map<String, Long> time = new HashMap<>();
     private final Map<String, PrefixPlayerDefault> playerDefaultCache;
     private final Map<String, PrefixList> playerCache;
-    private final long coolDownTime;
+    private final long coolTime;
     private final Chat chat;
     private final Mark mark = Mark.DEFAULT;
     private final Main main;
@@ -53,7 +54,7 @@ public class Executor implements Listener, CommandExecutor, Runnable {
         this.chat = main.getServer().getServicesManager().getRegistration(Chat.class).getProvider();
         this.main = main;
         this.db = db;
-        this.coolDownTime = main.getConfig().getInt("coolDown", 1) * 60000L;
+        this.coolTime = main.getConfig().getInt("coolDown", 1) * 60000L;
         all = db.find(PrefixDefine.class).findList();
     }
 
@@ -81,24 +82,25 @@ public class Executor implements Listener, CommandExecutor, Runnable {
         return false;
     }
 
-    private boolean execute(CommandSender sender, String[] j) {
+    private boolean execute(CommandSender sender, String[] i) {
         if (sender instanceof Player) {
-            Iterator<String> it = Arrays.asList(j).iterator();
+            Iterator<String> it = Arrays.asList(i).iterator();
             if (it.hasNext()) {
                 int id = Integer.parseInt(it.next());
                 if (it.hasNext()) throw new IllegalArgumentException();
                 PrefixPlayerDefine def = find(sender, id);
                 if (def == null) sender.sendMessage("§4您未拥有该称号");
                 else {
-                    PrefixPlayerDefault i = playerDefaultCache.get(sender.getName());
-                    if (i == null) throw new RuntimeException();
-                    i.setDefine(def);
+                    PrefixPlayerDefault j = playerDefaultCache.get(sender.getName());
+                    if (nil(j)) throw new RuntimeException();
+                    j.setDefine(def);
                     main.execute(() -> {
-                        i.update(db);
+                        j.update(db);
                         main.process(() -> {
                             Player p = Player.class.cast(sender);
                             chat.setPlayerPrefix(p, def.getDefine().getName());
                             sender.sendMessage("§6称号已选择");
+                            PermissionHolder.getHolder(p).setActivity(def.getDefine().getPermissionUse());
                             PrefixChangeEvent.call(p, def);
                         });
                     });
@@ -210,7 +212,7 @@ public class Executor implements Listener, CommandExecutor, Runnable {
     }
 
     private boolean use(Player player, int index) {
-        long coolDown = getCoolDown(coolDownMap.get(player.getName()));
+        long coolDown = getCoolDown(time.get(player.getName()));
         if (coolDown > 0) {
             player.sendMessage(ChatColor.RED + "称号切换冷却时间剩余" + coolDown / 1000 + "秒");
 
@@ -220,33 +222,31 @@ public class Executor implements Listener, CommandExecutor, Runnable {
         PrefixList prefixList = getPlayerCache().get(player.getName());
 
         if (index < 0 || index > prefixList.size()) {
-            player.sendMessage(ChatColor.RED + "发生了一些问题");
+            player.sendMessage(ChatColor.RED + "参数输入有问题");
 
             return false;
         }
 
-        PrefixPlayerDefault prefixDefault = getPlayerDefaultCache().get(player.getName());
+        PrefixPlayerDefault prefixDefault = playerDefaultCache.get(player.getName());
+        PermissionHolder holder = PermissionHolder.getHolder(player);
 
         if (index == 0) {
             prefixDefault.setDefine(null);
             chat.setPlayerPrefix(player, "");
+            holder.unsetActivity();
         } else {
             PrefixPlayerDefine selected = prefixList.get(index - 1);
             prefixDefault.setDefine(selected);
             chat.setPlayerPrefix(player, selected.getDefine().getName());
+            player.addPotionEffects(prefixDefault.getDefine().getDefine().getBuffList());
+            holder.setActivity(selected.getDefine().getPermissionUse());
         }
         // Update player's default prefix.
         main.execute(() -> prefixDefault.update(db));
+        time.put(player.getName(), System.currentTimeMillis() + coolTime);
 
-        if (prefixDefault.getDefine() != null) {
-            player.addPotionEffects(prefixDefault.getDefine().getDefine().getBuffList());
-        }
-
-        coolDownMap.put(player.getName(), System.currentTimeMillis() + coolDownTime);
-
+        PrefixChangeEvent.call(player, prefixDefault.getDefine());
         player.sendMessage(ChatColor.GOLD + "称号选择成功");
-
-        main.getServer().getPluginManager().callEvent(new PrefixChangeEvent(player, prefixDefault.getDefine()));
 
         return true;
     }
@@ -255,46 +255,51 @@ public class Executor implements Listener, CommandExecutor, Runnable {
         return time == null ? 0 : time - System.currentTimeMillis();
     }
 
+    private void setPrefix(Player player, String prefix) {
+        chat.setPlayerPrefix(player, prefix);
+    }
+
     @EventHandler
     public void handle(PlayerJoinEvent event) {
         main.execute(() -> {
-            Collection<PrefixPlayerDefine> list = process(db.find(PrefixPlayerDefine.class)
-                    .where()
-                    .eq("name", event.getPlayer().getName())
-                    .gt("outdated", new Timestamp(System.currentTimeMillis()))
-                    .findList()
-            );
+            Player player = event.getPlayer();
 
-            getPlayerCache().put(event.getPlayer().getName(), new PrefixList(list));
+            PrefixList list = new PrefixList(process(db.find(PrefixPlayerDefine.class)
+                    .where()
+                    .eq("name", player.getName())
+                    .gt("outdated", new Timestamp(System.currentTimeMillis()))
+                    .findList()));
+
+            PermissionHolder holder = PermissionHolder.getHolder(player);
+            holder.addHold(list);
+
+            getPlayerCache().put(player.getName(), list);
 
             PrefixPlayerDefault prefix = db.find(PrefixPlayerDefault.class)
                     .where()
-                    .eq("name", event.getPlayer().getName())
+                    .eq("name", player.getName())
                     .findUnique();
 
             if (prefix == null) {
-                prefix = a(event.getPlayer());
+                prefix = db.bean(PrefixPlayerDefault.class);
+                prefix.setName(player.getName());
+            } else {
+                PrefixPlayerDefine def = prefix.getDefine();
+                if (!nil(def)) {
+                    if (def.isOutdated()) {
+                        setPrefix(player, "");
+                    } else if (def.hasNoMark() || def.getMark().equals(mark.getMark())) {
+                        setPrefix(player, "");
+                    } else {
+                        holder.setActivity(def.getDefine().getPermissionUse());
+                        setPrefix(player, def.getDefine().getName());
+                    }
+                }
             }
 
-            getPlayerDefaultCache().put(event.getPlayer().getName(), prefix);
-
-            if (prefix != null && prefix.getDefine() != null && (prefix.getDefine().isOutdated() || (prefix.getDefine().hasMark() && !prefix.getDefine().getMark().equals(mark.getMark())))) {
-                chat.setPlayerPrefix(event.getPlayer(), "");
-            }
-
-            main.getServer().getPluginManager().callEvent(new PrefixInitializedEvent(event.getPlayer(), prefix));
+            playerDefaultCache.put(player.getName(), prefix);
+            main.getServer().getPluginManager().callEvent(new PrefixInitializedEvent(player, prefix));
         });
-    }
-
-    private Collection<PrefixPlayerDefine> process(Collection<PrefixPlayerDefine> list) {
-        Collection<PrefixPlayerDefine> reduced = CollectionUtil.reduce(list, line -> line.hasNoMark() || line.getMark().equals(mark.getMark()));
-        return reduced;
-    }
-
-    private PrefixPlayerDefault a(Player player) {
-        PrefixPlayerDefault prefix = db.bean(PrefixPlayerDefault.class);
-        prefix.setName(player.getName());
-        return prefix;
     }
 
     @EventHandler
@@ -302,14 +307,14 @@ public class Executor implements Listener, CommandExecutor, Runnable {
         dropCache(event.getPlayer().getName());
     }
 
+    private Collection<PrefixPlayerDefine> process(Collection<PrefixPlayerDefine> list) {
+        return CollectionUtil.reduce(list, line -> line.hasNoMark() || line.getMark().equals(mark.getMark()));
+    }
+
     private void dropCache(String name) {
         playerDefaultCache.remove(name);
         playerCache.remove(name);
-        coolDownMap.remove(name);
-    }
-
-    public Map<String, PrefixPlayerDefault> getPlayerDefaultCache() {
-        return playerDefaultCache;
+        time.remove(name);
     }
 
     public void bind() {
