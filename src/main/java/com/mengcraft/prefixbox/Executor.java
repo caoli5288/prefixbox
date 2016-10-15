@@ -11,7 +11,6 @@ import com.mengcraft.simpleorm.EbeanHandler;
 import com.wodogs.mc.mark.Mark;
 import net.milkbowl.vault.chat.Chat;
 import org.bukkit.ChatColor;
-import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -23,8 +22,10 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.potion.PotionEffect;
 
 import java.sql.Timestamp;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -44,6 +45,8 @@ public class Executor implements Listener, CommandExecutor, Runnable {
     private final Main main;
     private final EbeanHandler db;
 
+    private List<PrefixDefine> all;
+
     public Executor(Main main, EbeanHandler db) {
         this.playerCache = PrefixManager.INSTANCE.getPlayerCache();
         this.playerDefaultCache = PrefixManager.INSTANCE.getPlayerDefaultCache();
@@ -51,6 +54,7 @@ public class Executor implements Listener, CommandExecutor, Runnable {
         this.main = main;
         this.db = db;
         this.coolDownTime = main.getConfig().getInt("coolDown", 1) * 60000L;
+        all = db.find(PrefixDefine.class).findList();
     }
 
     @Override
@@ -66,8 +70,56 @@ public class Executor implements Listener, CommandExecutor, Runnable {
     }
 
     @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] arguments) {
-        return label.equals("pbox") ? use(sender, arguments) : label.equals("pboxadmin") && admin(sender, arguments);
+    public boolean onCommand(CommandSender sender, Command i, String label, String[] j) {
+        if (label.equals("pbox")) {
+            return use(sender, j);
+        } else if (label.equals("prefixbox")) {
+            return execute(sender, j);
+        } else if (label.equals("pboxadmin")) {
+            return admin(sender, j);
+        }
+        return false;
+    }
+
+    private boolean execute(CommandSender sender, String[] j) {
+        if (sender instanceof Player) {
+            Iterator<String> it = Arrays.asList(j).iterator();
+            if (it.hasNext()) {
+                int id = Integer.parseInt(it.next());
+                if (it.hasNext()) throw new IllegalArgumentException();
+                PrefixPlayerDefine def = find(sender, id);
+                if (def == null) sender.sendMessage("§4您未拥有该称号");
+                else {
+                    PrefixPlayerDefault i = playerDefaultCache.get(sender.getName());
+                    if (i == null) throw new RuntimeException();
+                    i.setDefine(def);
+                    main.execute(() -> {
+                        i.update(db);
+                        main.process(() -> {
+                            Player p = Player.class.cast(sender);
+                            chat.setPlayerPrefix(p, def.getDefine().getName());
+                            sender.sendMessage("§6称号已选择");
+                            PrefixChangeEvent.call(p, def);
+                        });
+                    });
+                }
+            } else {
+                sender.sendMessage("§6*** 全称号列表");
+                for (PrefixDefine def : all) {
+                    sender.sendMessage("§6> " + def.getId() + " " + def.getName());
+                }
+            }
+        }
+        return false;
+    }
+
+    private PrefixPlayerDefine find(CommandSender sender, int id) {
+        PrefixList list = playerCache.get(sender.getName());
+        if (list == null) return null;
+        for (PrefixPlayerDefine def : list) {
+            if (def.getDefine().getId() == id) return def;
+        }
+        return null;
     }
 
     private boolean admin(CommandSender sender, String[] args) {
