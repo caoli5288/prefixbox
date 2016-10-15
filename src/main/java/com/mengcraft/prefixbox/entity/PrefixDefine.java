@@ -1,6 +1,5 @@
 package com.mengcraft.prefixbox.entity;
 
-import com.mengcraft.prefixbox.Main;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.json.simple.JSONObject;
@@ -13,6 +12,8 @@ import javax.persistence.Transient;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import static com.mengcraft.prefixbox.Main.nil;
 
 /**
  * Created on 15-11-6.
@@ -38,15 +39,19 @@ public class PrefixDefine {
     @Transient
     private JSONObject root;
 
-    private static class Permission {
-        private String hold;
-        private String use;
+    protected static class Permission {
+        protected String hold;
+        protected String use;
 
-        private Permission(Map<String, String> map) {
-            if (!Main.nil(map)) {
-                hold = map.get("hold");
-                use = map.get("use");
+        protected Permission(Map<String, String> map) {
+            if (!nil(map)) {
+                hold = nullable(map.get("hold"));
+                use = nullable(map.get("use"));
             }
+        }
+
+        protected static String nullable(String in) {
+            return nil(in) ? in : (in.isEmpty() ? null : in);
         }
     }
 
@@ -54,10 +59,16 @@ public class PrefixDefine {
     private Permission permission;
 
     public String getPermissionHold() {
+        if (nil(permission)) {
+            parse();
+        }
         return permission.hold;
     }
 
     public String getPermissionUse() {
+        if (nil(permission)) {
+            parse();
+        }
         return permission.use;
     }
 

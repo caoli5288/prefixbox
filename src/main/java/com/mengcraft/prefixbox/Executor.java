@@ -180,21 +180,30 @@ public class Executor implements Listener, CommandExecutor, Runnable {
     }
 
     private boolean list(CommandSender sender) {
-        List<PrefixDefine> list = db.find(PrefixDefine.class).findList();
-
-        sender.sendMessage(ChatColor.GOLD + ">>> 已定义的称号列表");
-        for (PrefixDefine prefix : list) {
-            sender.sendMessage("§6" + prefix.getId() + ". " + prefix.getName());
-            for (String line : prefix.getLoreList()) {
-                sender.sendMessage("§6-- " + line);
+        if (all.isEmpty()) {
+            sender.sendMessage(ChatColor.RED + "未找到已定义的称号项目");
+        } else {
+            sender.sendMessage(ChatColor.GOLD + ">>> 已定义的称号列表");
+            for (PrefixDefine i : all) {
+                sender.sendMessage("§6" + i.getId() + ". " + i.getName());
+                for (String line : i.getLoreList()) {
+                    sender.sendMessage("§6-- " + line);
+                }
+                for (PotionEffect buff : i.getBuffList()) {
+                    sender.sendMessage("§6++ " + buff.getType().getName() + " lv" + buff.getAmplifier());
+                }
+                String hold = i.getPermissionHold();
+                if (!nil(hold)) {
+                    sender.sendMessage("§6** Hold permission " + hold);
+                }
+                String use = i.getPermissionUse();
+                if (!nil(use)) {
+                    sender.sendMessage("§6** Activity permission " + use);
+                }
             }
-            for (PotionEffect buff : prefix.getBuffList()) {
-                sender.sendMessage("§6++ " + buff.getType().getName() + " lv" + buff.getAmplifier());
-            }
+            return true;
         }
-        sender.sendMessage(ChatColor.GOLD + "<<<");
-
-        return !list.isEmpty();
+        return false;
     }
 
     private boolean use(CommandSender sender, String[] arguments) {
