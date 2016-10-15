@@ -122,22 +122,27 @@ public class Executor implements Listener, CommandExecutor, Runnable {
         return null;
     }
 
-    private boolean admin(CommandSender sender, String[] args) {
+    private boolean admin(CommandSender sender, String[] i) {
         if (!sender.hasPermission("prefixbox.admin")) {
             return false;
-        } else if (args.length == 0) {
+        } else if (i.length == 0) {
             sender.sendMessage(ChatColor.GOLD + "/pboxadmin list");
+            sender.sendMessage(ChatColor.GOLD + "/pboxadmin reload");
             sender.sendMessage(ChatColor.GOLD + "/pboxadmin give <player> <prefix_id> <day> [mark]");
-        } else if (args[0].equals("list") && args.length == 1) {
+        } else if (i[0].equals("list") && i.length == 1) {
             return list(sender);
-        } else if (args[0].equals("give")) {
-            if (args.length == 4) {
-                return give(sender, args[1], parseInt(args[2]), parseInt(args[3]), null);
-            } else if (args.length == 5) {
-                return give(sender, args[1], parseInt(args[2]), parseInt(args[3]), args[4]);
+        } else if (i[0].equals("give")) {
+            if (i.length == 4) {
+                return give(sender, i[1], parseInt(i[2]), parseInt(i[3]), null);
+            } else if (i.length == 5) {
+                return give(sender, i[1], parseInt(i[2]), parseInt(i[3]), i[4]);
             }
+        } else if (i[0].equals("reload")) {
+            all = db.find(PrefixDefine.class).findList();
+            sender.sendMessage("§a指令已完成");
+            return true;
         }
-        return true;
+        return false;
     }
 
     private boolean give(CommandSender sender, String name, int prefixId, int day, String mark) {
@@ -187,7 +192,7 @@ public class Executor implements Listener, CommandExecutor, Runnable {
         }
         sender.sendMessage(ChatColor.GOLD + "<<<");
 
-        return list.size() != 0;
+        return !list.isEmpty();
     }
 
     private boolean use(CommandSender sender, String[] arguments) {
