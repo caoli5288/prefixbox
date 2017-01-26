@@ -15,10 +15,12 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class Main extends JavaPlugin {
 
     public static Plugin plugin;
+    public static boolean debug;
 
     @Override
     public void onEnable() {
         plugin = this;
+        debug = getConfig().getBoolean("debug");
 
         EbeanHandler db = EbeanManager.DEFAULT.getHandler(this);
 
@@ -38,11 +40,19 @@ public class Main extends JavaPlugin {
         db.reflect();
 
         Executor executor = new Executor(this, db);
-        Plugin mark = getServer().getPluginManager().getPlugin("mark");
+        Plugin mark = getServer().getPluginManager().getPlugin("Mark");
         if (nil(mark)) {
             executor.setMark(def -> !def.hasMark());
         } else {
-            executor.setMark(def -> !def.hasMark() || Mark.DEFAULT.getMark().equals(def.getMark()));
+            String e = Mark.DEFAULT.getMark();
+            getLogger().info("获取到MARK -> " + e);
+            executor.setMark(def -> {
+                if (def.hasMark()) {
+                    return def.getMark().equals(e);
+                } else {
+                    return true;
+                }
+            });
         }
         executor.bind();
     }

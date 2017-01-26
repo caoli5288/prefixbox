@@ -19,6 +19,16 @@ public class PrefixPlayerDefine {
     private PrefixDefine define;
     private Timestamp outdated;
 
+    @Override
+    public String toString() {
+        return ("Def -> (" + "id=" + id +
+                ", name='" + name + '\'' +
+                ", mark='" + mark + '\'' +
+                ", define=" + define +
+                ", outdated=" + outdated +
+                ')');
+    }
+
     public int getId() {
         return id;
     }

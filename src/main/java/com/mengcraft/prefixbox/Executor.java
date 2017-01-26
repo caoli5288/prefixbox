@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 
 import static com.mengcraft.prefixbox.Main.nil;
 import static java.lang.Integer.parseInt;
@@ -93,9 +94,7 @@ public class Executor implements Listener, CommandExecutor, Runnable {
                 if (it.hasNext()) throw new IllegalArgumentException();
                 PrefixPlayerDefine def = find(sender, id);
                 if (nil(def)) {
-                    sender.sendMessage("§4您未拥有该称号");
-                } else if (!mark.match(def)) {
-                    sender.sendMessage("§4所选称号无法在当前区域使用");
+                    sender.sendMessage("§4您未拥有该称号或所选称号无法在当前区域使用");
                 } else {
                     PrefixPlayerDefault j = playerDefaultCache.get(sender.getName());
                     if (nil(j)) throw new RuntimeException();
@@ -279,11 +278,17 @@ public class Executor implements Listener, CommandExecutor, Runnable {
         main.execute(() -> {
             Player player = event.getPlayer();
 
-            PrefixList list = new PrefixList(process(db.find(PrefixPlayerDefine.class)
+            List<PrefixPlayerDefine> l = db.find(PrefixPlayerDefine.class)
                     .where()
                     .eq("name", player.getName())
                     .gt("outdated", new Timestamp(System.currentTimeMillis()))
-                    .findList()));
+                    .findList();
+
+            if (Main.debug) {
+                main.getLogger().log(Level.INFO, "" + l);
+            }
+
+            PrefixList list = new PrefixList(process(l));
 
             PermissionHolder holder = PermissionHolder.getHolder(player);
             holder.addHold(list);
