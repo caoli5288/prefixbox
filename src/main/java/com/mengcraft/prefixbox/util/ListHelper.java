@@ -10,7 +10,7 @@ import java.util.function.Predicate;
 /**
  * Created on 16-3-9.
  */
-public final class CollectionUtil {
+public final class ListHelper {
 
     @SuppressWarnings("unchecked")
     public static <E> Collection<E> concat(Collection<E> i, Collection<E> i1) {

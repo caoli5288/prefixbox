@@ -5,8 +5,8 @@ import com.mengcraft.prefixbox.entity.PrefixPlayerDefault;
 import com.mengcraft.prefixbox.entity.PrefixPlayerDefine;
 import com.mengcraft.prefixbox.event.PrefixChangeEvent;
 import com.mengcraft.prefixbox.event.PrefixInitializedEvent;
-import com.mengcraft.prefixbox.util.CollectionUtil;
-import com.mengcraft.prefixbox.util.PrefixList;
+import com.mengcraft.prefixbox.util.ListHelper;
+import com.mengcraft.prefixbox.util.MyList;
 import com.mengcraft.simpleorm.EbeanHandler;
 import net.milkbowl.vault.chat.Chat;
 import org.bukkit.ChatColor;
@@ -39,7 +39,7 @@ public class Executor implements Listener, CommandExecutor, Runnable {
 
     private final Map<String, Long> time = new HashMap<>();
     private final Map<String, PrefixPlayerDefault> playerDefaultCache;
-    private final Map<String, PrefixList> playerCache;
+    private final Map<String, MyList> playerCache;
     private final long coolTime;
     private final Chat chat;
     private final EbeanHandler db;
@@ -121,7 +121,7 @@ public class Executor implements Listener, CommandExecutor, Runnable {
     }
 
     private PrefixPlayerDefine find(CommandSender sender, int id) {
-        PrefixList list = playerCache.get(sender.getName());
+        MyList list = playerCache.get(sender.getName());
         if (list == null) return null;
         for (PrefixPlayerDefine def : list) {
             if (def.getDefine().getId() == id) return def;
@@ -153,23 +153,23 @@ public class Executor implements Listener, CommandExecutor, Runnable {
     }
 
     private boolean give(CommandSender sender, String name, int prefixId, int day, String mark) {
-        PrefixDefine prefixDefine = db.find(PrefixDefine.class, prefixId);
+        PrefixDefine def = db.find(PrefixDefine.class, prefixId);
 
         // Return if prefix not exists!
-        if (prefixDefine == null) return false;
+        if (nil(def)) return false;
 
         PrefixPlayerDefine selected = db.find(PrefixPlayerDefine.class)
                 .where()
                 .eq("name", name)
-                .eq("define", prefixDefine)
+                .eq("define", def)
                 .gt("outdated", new Timestamp(System.currentTimeMillis()))
                 .findUnique();
 
-        if (selected == null) {
+        if (nil(selected)) {
             PrefixPlayerDefine inserted = new PrefixPlayerDefine();
             inserted.setName(name);
             inserted.setMark(mark);
-            inserted.setDefine(prefixDefine);
+            inserted.setDefine(def);
             inserted.setOutdated(new Timestamp(System.currentTimeMillis() + day * 86400000L));
 
             main.execute(() -> db.insert(inserted));
@@ -233,7 +233,7 @@ public class Executor implements Listener, CommandExecutor, Runnable {
             return false;
         }
 
-        PrefixList prefixList = getPlayerCache().get(player.getName());
+        MyList prefixList = getPlayerCache().get(player.getName());
 
         if (index < 0 || index > prefixList.size()) {
             player.sendMessage(ChatColor.RED + "参数输入有问题");
@@ -288,7 +288,7 @@ public class Executor implements Listener, CommandExecutor, Runnable {
                 main.getLogger().log(Level.INFO, "" + l);
             }
 
-            PrefixList list = new PrefixList(process(l));
+            MyList list = new MyList(process(l));
 
             PermissionHolder holder = PermissionHolder.getHolder(player);
             holder.addHold(list);
@@ -328,7 +328,7 @@ public class Executor implements Listener, CommandExecutor, Runnable {
     }
 
     private Collection<PrefixPlayerDefine> process(Collection<PrefixPlayerDefine> list) {
-        return CollectionUtil.reduce(list, line -> mark.match(line));
+        return ListHelper.reduce(list, line -> mark.match(line));
     }
 
     private void dropCache(String name) {
@@ -343,7 +343,7 @@ public class Executor implements Listener, CommandExecutor, Runnable {
         main.getServer().getScheduler().runTaskTimer(main, this, 900, 900);
     }
 
-    public Map<String, PrefixList> getPlayerCache() {
+    public Map<String, MyList> getPlayerCache() {
         return playerCache;
     }
 

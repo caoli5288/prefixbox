@@ -10,9 +10,9 @@ import java.util.List;
 /**
  * Created on 15-11-6.
  */
-public class PrefixList extends ArrayList<PrefixPlayerDefine> {
+public class MyList extends ArrayList<PrefixPlayerDefine> {
 
-    public PrefixList(Collection<PrefixPlayerDefine> context) {
+    public MyList(Collection<PrefixPlayerDefine> context) {
         super(context);
     }
 

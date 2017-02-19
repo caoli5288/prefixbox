@@ -1,6 +1,6 @@
 package com.mengcraft.prefixbox;
 
-import com.mengcraft.prefixbox.util.PrefixList;
+import com.mengcraft.prefixbox.util.MyList;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.PermissionAttachment;
 
@@ -44,7 +44,7 @@ public class PermissionHolder {
         }
     }
 
-    public void addHold(PrefixList list) {
+    public void addHold(MyList list) {
         list.forEach(def -> {
             String i = def.getDefine().getPermissionHold();
             if (!nil(i)) {
