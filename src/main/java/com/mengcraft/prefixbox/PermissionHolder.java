@@ -15,15 +15,18 @@ import static com.mengcraft.prefixbox.Main.nil;
  */
 public class PermissionHolder {
 
-    private final static Map<UUID, PermissionHolder> HOLDER = new HashMap<>();
     private final Player player;
     private final PermissionAttachment hold;
     private PermissionAttachment activity;
 
+    private static class LazyHold {
+
+        private final static Map<UUID, PermissionHolder> HOLDER = new HashMap<>();
+    }
+
     private PermissionHolder(Player player) {
         this.player = player;
         hold = player.addAttachment(Main.getPlugin());
-        HOLDER.put(player.getUniqueId(), this);
     }
 
     public void setActivity(String permission) {
@@ -54,11 +57,16 @@ public class PermissionHolder {
     }
 
     public static PermissionHolder getHolder(Player player) {
-        PermissionHolder holder = HOLDER.get(player.getUniqueId());
+        PermissionHolder holder = LazyHold.HOLDER.get(player.getUniqueId());
         if (nil(holder)) {
             holder = new PermissionHolder(player);
+            LazyHold.HOLDER.put(player.getUniqueId(), holder);
         }
         return holder;
+    }
+
+    public static void del(Player player) {
+        LazyHold.HOLDER.remove(player.getUniqueId());
     }
 
 }

@@ -324,6 +324,7 @@ public class Executor implements Listener, CommandExecutor, Runnable {
 
     @EventHandler
     public void handle(PlayerQuitEvent event) {
+        PermissionHolder.del(event.getPlayer());
         dropCache(event.getPlayer().getName());
     }
 
