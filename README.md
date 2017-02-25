@@ -1,4 +1,6 @@
 # PrefixBox
+i5mc's prefixbox plugin.
+
 ## Data structure
 ```JSON
 {
