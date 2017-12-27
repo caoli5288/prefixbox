@@ -17,4 +17,4 @@ permissions:
     default: op
 
 depend: [SimpleORM, Vault]
-softdepend: [Mark]
+softdepend: [Mark, PlaceholderAPI]

@@ -6,16 +6,20 @@ import com.mengcraft.prefixbox.entity.PrefixPlayerDefine;
 import com.mengcraft.simpleorm.EbeanHandler;
 import com.mengcraft.simpleorm.EbeanManager;
 import com.wodogs.mc.mark.Mark;
+import lombok.Getter;
+import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
 /**
  * Created on 15-11-6.
  */
+@Getter
 public class Main extends JavaPlugin {
 
     public static Plugin plugin;
     public static boolean debug;
+    private Executor executor;
 
     @Override
     public void onEnable() {
@@ -39,7 +43,7 @@ public class Main extends JavaPlugin {
         db.install();
         db.reflect();
 
-        Executor executor = new Executor(this, db);
+        executor = new Executor(this, db);
         Plugin mark = getServer().getPluginManager().getPlugin("Mark");
         if (nil(mark)) {
             executor.setMark(def -> !def.hasMark());
@@ -55,6 +59,10 @@ public class Main extends JavaPlugin {
             });
         }
         executor.bind();
+
+        if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
+            new BoxPlaceholderHandler(this).hook();
+        }
     }
 
     public void execute(Runnable runnable) {

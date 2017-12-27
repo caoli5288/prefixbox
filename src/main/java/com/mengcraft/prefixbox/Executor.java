@@ -8,6 +8,7 @@ import com.mengcraft.prefixbox.event.PrefixInitializedEvent;
 import com.mengcraft.prefixbox.util.ListHelper;
 import com.mengcraft.prefixbox.util.MyList;
 import com.mengcraft.simpleorm.EbeanHandler;
+import lombok.Getter;
 import net.milkbowl.vault.chat.Chat;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -45,6 +46,7 @@ public class Executor implements Listener, CommandExecutor, Runnable {
     private final EbeanHandler db;
     private final Main main;
 
+    @Getter
     private List<PrefixDefine> all;
     private LibMark mark;
 
