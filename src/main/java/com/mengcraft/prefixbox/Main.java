@@ -14,11 +14,12 @@ import org.bukkit.plugin.java.JavaPlugin;
 /**
  * Created on 15-11-6.
  */
-@Getter
 public class Main extends JavaPlugin {
 
-    public static Plugin plugin;
-    public static boolean debug;
+    private static Main plugin;
+    @Getter
+    private static boolean debug;
+    @Getter
     private Executor executor;
 
     @Override
@@ -50,18 +51,12 @@ public class Main extends JavaPlugin {
         } else {
             String e = Mark.DEFAULT.getMark();
             getLogger().info("获取到MARK -> " + e);
-            executor.setMark(def -> {
-                if (def.hasMark()) {
-                    return def.getMark().equals(e);
-                } else {
-                    return true;
-                }
-            });
+            executor.setMark(def -> !def.hasMark() || def.getMark().equals(e));
         }
         executor.bind();
 
         if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
-            new BoxPlaceholderHandler(this).hook();
+            new BoxPAPIHandler(this).hook();
         }
     }
 
@@ -77,7 +72,7 @@ public class Main extends JavaPlugin {
         return i == null;
     }
 
-    public static Plugin getPlugin() {
+    public static Main getPlugin() {
         return plugin;
     }
 

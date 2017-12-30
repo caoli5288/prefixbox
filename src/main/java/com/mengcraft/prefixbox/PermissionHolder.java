@@ -48,7 +48,7 @@ public class PermissionHolder {
     }
 
     public void addHold(MyList list) {
-        list.forEach(def -> {
+        list.values().forEach(def -> {
             String i = def.getDefine().getPermissionHold();
             if (!nil(i)) {
                 hold.setPermission(i, true);

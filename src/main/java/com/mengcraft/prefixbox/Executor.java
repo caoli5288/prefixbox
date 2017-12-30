@@ -125,7 +125,7 @@ public class Executor implements Listener, CommandExecutor, Runnable {
     private PrefixPlayerDefine find(CommandSender sender, int id) {
         MyList list = playerCache.get(sender.getName());
         if (list == null) return null;
-        for (PrefixPlayerDefine def : list) {
+        for (PrefixPlayerDefine def : list.values()) {
             if (def.getDefine().getId() == id) return def;
         }
         return null;
@@ -286,7 +286,7 @@ public class Executor implements Listener, CommandExecutor, Runnable {
                     .gt("outdated", new Timestamp(System.currentTimeMillis()))
                     .findList();
 
-            if (Main.debug) {
+            if (Main.isDebug()) {
                 main.getLogger().log(Level.INFO, "" + l);
             }
 
